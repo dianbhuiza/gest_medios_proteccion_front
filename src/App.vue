@@ -1,11 +1,13 @@
-<script setup lang="ts"></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <v-app>
+    <v-main>
+      <v-container class="py-12">
+        <h1 class="text-h4 font-weight-bold mb-2">Refineria Front</h1>
+        <p class="text-medium-emphasis">
+          Base de arquitectura configurada con Vuetify, Pinia, Vue Query, Axios, vee-validate y
+          Zod.
+        </p>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
-
-<style scoped></style>
