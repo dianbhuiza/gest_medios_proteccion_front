@@ -8,6 +8,7 @@ import vuetify from '@/app/providers/vuetify'
 import { queryClient } from '@/app/providers/query-client'
 
 import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
 
 const app = createApp(App)
 

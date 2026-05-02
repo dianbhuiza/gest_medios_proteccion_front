@@ -21,8 +21,24 @@
       </template>
 
       <template #actions="{ item }">
-        <v-btn size="small" variant="text" @click="openEdit((item as unknown as { raw: AsignacionMpp }).raw)">Editar</v-btn>
-        <v-btn size="small" variant="text" color="error" @click="openDelete((item as unknown as { raw: AsignacionMpp }).raw)">Eliminar</v-btn>
+        <v-menu location="bottom end" attach="body">
+          <template #activator="{ props: menuProps }">
+            <v-btn size="small" variant="text" icon="mdi-dots-vertical" color="on-surface" v-bind="menuProps" />
+          </template>
+          <v-list density="compact" nav min-width="150">
+            <v-list-item
+              prepend-icon="mdi-pencil"
+              title="Editar"
+              @click="openEdit((item as unknown as { raw: AsignacionMpp }).raw)"
+            />
+            <v-list-item
+              prepend-icon="mdi-delete"
+              title="Eliminar"
+              class="text-error"
+              @click="openDelete((item as unknown as { raw: AsignacionMpp }).raw)"
+            />
+          </v-list>
+        </v-menu>
       </template>
     </EntityTable>
 

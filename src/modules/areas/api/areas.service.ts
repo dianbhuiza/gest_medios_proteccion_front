@@ -1,14 +1,23 @@
 import { apiClient } from '@/core/http/axios'
 import type { ListParams, PaginatedResponse } from '@/core/types/api'
 
+export interface SubArea {
+  id: number
+  nombre: string
+  area_id: number
+}
+
 export interface Area {
   id: number
   nombre: string
+  sub_areas: SubArea[]
 }
 
 export interface AreaPayload {
   nombre: string
 }
+
+export type SubAreaPayload = AreaPayload
 
 export const areasService = {
   async list(params: ListParams) {
@@ -25,5 +34,17 @@ export const areasService = {
   },
   async remove(id: number) {
     await apiClient.delete(`/v1/areas/${id}`)
+  },
+
+  async createSubArea(areaId: number, payload: SubAreaPayload) {
+    const { data } = await apiClient.post<SubArea>(`/v1/areas/${areaId}/subareas`, payload)
+    return data
+  },
+  async updateSubArea(areaId: number, subAreaId: number, payload: SubAreaPayload) {
+    const { data } = await apiClient.put<SubArea>(`/v1/areas/${areaId}/subareas/${subAreaId}`, payload)
+    return data
+  },
+  async removeSubArea(areaId: number, subAreaId: number) {
+    await apiClient.delete(`/v1/areas/${areaId}/subareas/${subAreaId}`)
   },
 }

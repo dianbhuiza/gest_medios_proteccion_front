@@ -102,7 +102,8 @@ Prefijo: `/areas`
 ```json
 {
   "id": 1,
-  "nombre": "Produccion"
+  "nombre": "Produccion",
+  "sub_areas": []
 }
 ```
 
@@ -116,7 +117,14 @@ Prefijo: `/areas`
   "results": [
     {
       "id": 1,
-      "nombre": "Produccion"
+      "nombre": "Produccion",
+      "sub_areas": [
+        {
+          "id": 1,
+          "nombre": "Refinacion",
+          "area_id": 1
+        }
+      ]
     }
   ],
   "meta": {
@@ -136,7 +144,14 @@ Prefijo: `/areas`
 ```json
 {
   "id": 1,
-  "nombre": "Produccion"
+  "nombre": "Produccion",
+  "sub_areas": [
+    {
+      "id": 1,
+      "nombre": "Refinacion",
+      "area_id": 1
+    }
+  ]
 }
 ```
 
@@ -153,13 +168,67 @@ Prefijo: `/areas`
 ```json
 {
   "id": 1,
-  "nombre": "Produccion Turno A"
+  "nombre": "Produccion Turno A",
+  "sub_areas": [
+    {
+      "id": 1,
+      "nombre": "Refinacion",
+      "area_id": 1
+    }
+  ]
 }
 ```
 
 ### 5) Eliminar area
 - Ruta: `DELETE /api/v1/areas/{area_id}`
 - Operacion: Eliminar
+- Body: No requerido
+- Respuesta `204`: sin contenido
+
+### 6) Crear sub area
+- Ruta: `POST /api/v1/areas/{area_id}/subareas`
+- Operacion: Crear sub area para un area
+- Body:
+```json
+{
+  "nombre": "Refinacion"
+}
+```
+- Respuesta `201`:
+```json
+{
+  "id": 1,
+  "nombre": "Refinacion",
+  "area_id": 1
+}
+```
+
+### 7) Listar sub areas de un area
+- Ruta: `GET /api/v1/areas/{area_id}/subareas?page=1&pageSize=20`
+- Operacion: Listado paginado de sub areas por area
+- Body: No requerido
+- Respuesta `200`: formato paginado de `SubAreaResponse`
+
+### 8) Obtener sub area por id
+- Ruta: `GET /api/v1/areas/{area_id}/subareas/{subarea_id}`
+- Operacion: Obtener detalle de sub area
+- Body: No requerido
+- Respuesta `200`: estructura `SubAreaResponse`
+
+### 9) Actualizar sub area
+- Ruta: `PUT /api/v1/areas/{area_id}/subareas/{subarea_id}`
+- Operacion: Actualizar sub area
+- Body:
+```json
+{
+  "nombre": "Refinacion Turno A"
+}
+```
+- Respuesta `200`: estructura `SubAreaResponse`
+
+### 10) Eliminar sub area
+- Ruta: `DELETE /api/v1/areas/{area_id}/subareas/{subarea_id}`
+- Operacion: Eliminar sub area
 - Body: No requerido
 - Respuesta `204`: sin contenido
 
@@ -311,7 +380,7 @@ Prefijo: `/trabajadores`
 ```json
 {
   "nombre": "Juan Perez",
-  "area_id": 1,
+  "sub_area_id": 1,
   "cargo_id": 1,
   "talla_overol_id": 2,
   "talla_botas_id": 5
@@ -322,7 +391,7 @@ Prefijo: `/trabajadores`
 {
   "id": 1,
   "nombre": "Juan Perez",
-  "area_id": 1,
+  "sub_area_id": 1,
   "cargo_id": 1,
   "talla_overol_id": 2,
   "talla_botas_id": 5
@@ -348,7 +417,7 @@ Prefijo: `/trabajadores`
 ```json
 {
   "nombre": "Juan P.",
-  "area_id": 2,
+  "sub_area_id": 2,
   "cargo_id": 3,
   "talla_overol_id": 3,
   "talla_botas_id": 6
@@ -476,12 +545,13 @@ Prefijo: `/mpps`
       "cantidad": 5
     },
     {
-      "talla_id": 3,
+      "talla_id": null,
       "cantidad": 8
     }
   ]
 }
 ```
+- Nota: para MPP `sin_talla`, `talla_id` puede omitirse o enviarse en `null`.
 - Respuesta `200`: formato paginado de `MppStockResponse`
 
 ### 10) Retiro de stock multiple
@@ -496,12 +566,13 @@ Prefijo: `/mpps`
       "cantidad": 2
     },
     {
-      "talla_id": 3,
+      "talla_id": null,
       "cantidad": 1
     }
   ]
 }
 ```
+- Nota: para MPP `sin_talla`, `talla_id` puede omitirse o enviarse en `null`.
 - Respuesta `200`: formato paginado de `MppStockResponse`
 
 ---
@@ -600,7 +671,7 @@ Prefijo: `/retiros`
   "mpps": [
     {
       "mpp_id": 1,
-      "talla_id": 2,
+      "talla_id": null,
       "cantidad": 1
     }
   ]
@@ -609,7 +680,9 @@ Prefijo: `/retiros`
 - Respuesta `200`:
 ```json
 {
-  "message": "Retiros procesados correctamente"
+  "aseos_retirados": 1,
+  "mpps_retirados": 1,
+  "mensaje": "Se retiraron 1 aseos y 1 mpps correctamente"
 }
 ```
 
@@ -628,7 +701,7 @@ Prefijo: `/asignaciones-mpp`
   "items": [
     {
       "mpp_id": 1,
-      "talla_id": 2
+      "talla_id": null
     }
   ]
 }
@@ -637,22 +710,24 @@ Prefijo: `/asignaciones-mpp`
 ```json
 {
   "id": 1,
-  "fecha": "2026-04-29T10:00:00",
-  "trabajador_id": 1,
+  "id_trabajador": 1,
   "items": [
     {
-      "id": 1,
-      "asignacion_id": 1,
-      "mpp_id": 1,
-      "talla_id": 2
+      "id_mpp": 1,
+      "nombre_mpp": "Botas",
+      "talla": "XL",
+      "cantidad": 1
     }
   ]
 }
 ```
 
 ### 2) Listar asignaciones MPP
-- Ruta: `GET /api/v1/asignaciones-mpp?page=1&pageSize=20`
+- Ruta: `GET /api/v1/asignaciones-mpp?page=1&pageSize=20&area_id=1&fecha=2026-05-02`
 - Operacion: Listado paginado
+- Query params opcionales:
+  - `area_id`: filtra por area del trabajador
+  - `fecha`: filtra por fecha exacta (formato `YYYY-MM-DD`)
 - Body: No requerido
 - Respuesta `200`: formato paginado de `AsignacionMppResponse`
 
@@ -668,7 +743,6 @@ Prefijo: `/asignaciones-mpp`
 - Body (campos opcionales):
 ```json
 {
-  "fecha": "2026-04-29T12:00:00",
   "trabajador_id": 2
 }
 ```
@@ -691,7 +765,7 @@ Prefijo: `/asignaciones-aseo`
 - Body:
 ```json
 {
-  "trabajador_id": 1,
+  "sub_area_id": 1,
   "items": [
     {
       "aseo_id": 1,
@@ -704,13 +778,11 @@ Prefijo: `/asignaciones-aseo`
 ```json
 {
   "id": 1,
-  "fecha": "2026-04-29T10:00:00",
-  "trabajador_id": 1,
+  "id_sub_area": 1,
   "items": [
     {
-      "id": 1,
-      "asignacion_id": 1,
-      "aseo_id": 1,
+      "id_aseo": 1,
+      "nombre_aseo": "Jabon industrial",
       "cantidad": 3
     }
   ]
@@ -718,8 +790,11 @@ Prefijo: `/asignaciones-aseo`
 ```
 
 ### 2) Listar asignaciones aseo
-- Ruta: `GET /api/v1/asignaciones-aseo?page=1&pageSize=20`
+- Ruta: `GET /api/v1/asignaciones-aseo?page=1&pageSize=20&area_id=1&fecha=2026-05-02`
 - Operacion: Listado paginado
+- Query params opcionales:
+  - `area_id`: filtra por area de la sub area asignada
+  - `fecha`: filtra por fecha exacta (formato `YYYY-MM-DD`)
 - Body: No requerido
 - Respuesta `200`: formato paginado de `AsignacionAseoResponse`
 
@@ -735,8 +810,7 @@ Prefijo: `/asignaciones-aseo`
 - Body (campos opcionales):
 ```json
 {
-  "fecha": "2026-04-29T12:00:00",
-  "trabajador_id": 2
+  "sub_area_id": 2
 }
 ```
 - Respuesta `200`: estructura `AsignacionAseoResponse`
@@ -752,12 +826,12 @@ Prefijo: `/asignaciones-aseo`
 ## Resumen Rapido de Metodos por Modulo
 
 - Auth: `POST /signin`, `POST /refresh`, `GET /validate`
-- Area: CRUD completo + listado paginado
+- Area: CRUD completo + CRUD de sub areas
 - Cargo: CRUD completo + listado paginado
 - Talla: CRUD completo + listado paginado
-- Trabajador: CRUD completo + listado paginado
-- MPP: CRUD, gestion de stock, ingresos/retiros, listados paginados
+- Trabajador: CRUD completo + listado paginado (relacionado a sub_area_id)
+- MPP: CRUD, gestion de stock, ingresos/retiros, listados paginados (soporta MPP sin talla)
 - Aseo: CRUD, ingresos/retiros, listado paginado
 - Retiros: retiro centralizado en lote
-- Asignacion MPP: CRUD + listado paginado
-- Asignacion Aseo: CRUD + listado paginado
+- Asignacion MPP: CRUD + listado paginado + filtros por area_id y fecha
+- Asignacion Aseo: CRUD + listado paginado + filtros por area_id y fecha
