@@ -1,15 +1,17 @@
 import { apiClient } from '@/core/http/axios'
 import type { ListParams, PaginatedResponse } from '@/core/types/api'
 
+export type MppTipoTalla = 'overol' | 'botas' | 'sin_talla'
+
 export interface Mpp {
   id: number
   nombre: string
-  tipo_talla: string
+  tipo_talla: MppTipoTalla
 }
 
 export interface MppPayload {
   nombre: string
-  tipo_talla: string
+  tipo_talla: MppTipoTalla
 }
 
 export interface MppStock {

@@ -10,8 +10,13 @@ export interface CargoPayload {
   nombre: string
 }
 
+export interface CargoListParams extends ListParams {
+  nombre?: string
+  search?: string
+}
+
 export const cargosService = {
-  async list(params: ListParams) {
+  async list(params: CargoListParams) {
     const { data } = await apiClient.get<PaginatedResponse<Cargo>>('/v1/cargos', { params })
     return data
   },

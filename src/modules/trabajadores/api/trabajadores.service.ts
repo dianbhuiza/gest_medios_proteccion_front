@@ -4,7 +4,7 @@ import type { ListParams, PaginatedResponse } from '@/core/types/api'
 export interface Trabajador {
   id: number
   nombre: string
-  area_id: number
+  sub_area_id: number
   cargo_id: number
   talla_overol_id: number
   talla_botas_id: number
@@ -12,7 +12,7 @@ export interface Trabajador {
 
 export interface TrabajadorPayload {
   nombre: string
-  area_id: number
+  sub_area_id: number
   cargo_id: number
   talla_overol_id: number
   talla_botas_id: number

@@ -6,9 +6,12 @@ import App from './App.vue'
 import router from './router'
 import vuetify from '@/app/providers/vuetify'
 import { queryClient } from '@/app/providers/query-client'
+import { setRouter } from '@/core/http/interceptors'
 
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
+
+setRouter(router)
 
 const app = createApp(App)
 

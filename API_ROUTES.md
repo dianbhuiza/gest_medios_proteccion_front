@@ -108,8 +108,9 @@ Prefijo: `/areas`
 ```
 
 ### 2) Listar areas
-- Ruta: `GET /api/v1/areas?page=1&pageSize=20`
+- Ruta: `GET /api/v1/areas?page=1&pageSize=20&nombre=prod`
 - Operacion: Listado paginado
+- Filtros opcionales: `nombre` (busqueda parcial por nombre de area)
 - Body: No requerido
 - Respuesta `200`:
 ```json
@@ -122,7 +123,8 @@ Prefijo: `/areas`
         {
           "id": 1,
           "nombre": "Refinacion",
-          "area_id": 1
+          "area_id": 1,
+          "area_nombre": "Produccion"
         }
       ]
     }
@@ -149,7 +151,8 @@ Prefijo: `/areas`
     {
       "id": 1,
       "nombre": "Refinacion",
-      "area_id": 1
+      "area_id": 1,
+      "area_nombre": "Produccion"
     }
   ]
 }
@@ -173,7 +176,8 @@ Prefijo: `/areas`
     {
       "id": 1,
       "nombre": "Refinacion",
-      "area_id": 1
+      "area_id": 1,
+      "area_nombre": "Produccion"
     }
   ]
 }
@@ -199,23 +203,76 @@ Prefijo: `/areas`
 {
   "id": 1,
   "nombre": "Refinacion",
-  "area_id": 1
+  "area_id": 1,
+  "area_nombre": "Produccion"
 }
 ```
 
 ### 7) Listar sub areas de un area
-- Ruta: `GET /api/v1/areas/{area_id}/subareas?page=1&pageSize=20`
+- Ruta: `GET /api/v1/areas/{area_id}/subareas?page=1&pageSize=20&nombre=ref`
 - Operacion: Listado paginado de sub areas por area
+- Filtros opcionales: `nombre` (busqueda parcial por nombre de sub area)
 - Body: No requerido
-- Respuesta `200`: formato paginado de `SubAreaResponse`
+- Respuesta `200`:
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "nombre": "Refinacion",
+      "area_id": 1,
+      "area_nombre": "Produccion"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 1,
+    "total": 1
+  }
+}
+```
 
-### 8) Obtener sub area por id
+### 8) Listar sub areas (global, sin area_id)
+- Ruta: `GET /api/v1/areas/subareas?page=1&pageSize=20&search=ref`
+- Operacion: Listado paginado global de sub areas
+- Filtros opcionales: `search` (busqueda parcial en `sub_area.nombre` o `area.nombre`)
+- Body: No requerido
+- Respuesta `200`:
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "nombre": "Refinacion",
+      "area_id": 1,
+      "area_nombre": "Produccion"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 1,
+    "total": 1
+  }
+}
+```
+
+### 9) Obtener sub area por id
 - Ruta: `GET /api/v1/areas/{area_id}/subareas/{subarea_id}`
 - Operacion: Obtener detalle de sub area
 - Body: No requerido
-- Respuesta `200`: estructura `SubAreaResponse`
+- Respuesta `200`:
+```json
+{
+  "id": 1,
+  "nombre": "Refinacion",
+  "area_id": 1,
+  "area_nombre": "Produccion"
+}
+```
 
-### 9) Actualizar sub area
+### 10) Actualizar sub area
 - Ruta: `PUT /api/v1/areas/{area_id}/subareas/{subarea_id}`
 - Operacion: Actualizar sub area
 - Body:
@@ -224,9 +281,17 @@ Prefijo: `/areas`
   "nombre": "Refinacion Turno A"
 }
 ```
-- Respuesta `200`: estructura `SubAreaResponse`
+- Respuesta `200`:
+```json
+{
+  "id": 1,
+  "nombre": "Refinacion Turno A",
+  "area_id": 1,
+  "area_nombre": "Produccion"
+}
+```
 
-### 10) Eliminar sub area
+### 11) Eliminar sub area
 - Ruta: `DELETE /api/v1/areas/{area_id}/subareas/{subarea_id}`
 - Operacion: Eliminar sub area
 - Body: No requerido

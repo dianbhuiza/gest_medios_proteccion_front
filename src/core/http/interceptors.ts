@@ -1,4 +1,6 @@
-import type { AxiosInstance, AxiosRequestConfig } from 'axios'
+import type { AxiosInstance } from 'axios'
+import type { Router } from 'vue-router'
+import { useAuthStore } from '@/modules/auth/store/auth.store'
 
 interface RetryableRequestConfig {
   _retry?: boolean
@@ -7,34 +9,52 @@ interface RetryableRequestConfig {
 }
 
 let refreshPromise: Promise<boolean> | null = null
+let routerInstance: Router | null = null
+
+export function setRouter(router: Router) {
+  routerInstance = router
+}
 
 function shouldSkipAuthHandling(url?: string) {
   return Boolean(url && /\/v1\/auth\/(signin|refresh|validate)/.test(url))
 }
 
 function redirectToLogin() {
-  if (typeof window === 'undefined') {
+  const authStore = useAuthStore()
+  authStore.setAnonymous()
+
+  if (!routerInstance) {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      const redirect = `${window.location.pathname}${window.location.search}`
+      window.location.assign(`/login?redirect=${encodeURIComponent(redirect)}`)
+    }
     return
   }
 
-  if (window.location.pathname === '/login') {
+  if (routerInstance.currentRoute.value.path === '/login') {
     return
   }
 
-  const redirect = `${window.location.pathname}${window.location.search}`
-  window.location.assign(`/login?redirect=${encodeURIComponent(redirect)}`)
+  const redirect = routerInstance.currentRoute.value.fullPath
+  routerInstance.push({
+    name: 'login',
+    query: { redirect },
+  })
 }
 
 async function refreshAccessToken(client: AxiosInstance) {
   if (!refreshPromise) {
-    const refreshConfig: AxiosRequestConfig & RetryableRequestConfig = {
-      skipAuthRefresh: true,
-    }
-
     refreshPromise = client
-      .post('/v1/auth/refresh', undefined, refreshConfig)
-      .then(() => true)
-      .catch(() => false)
+      .post('/v1/auth/refresh')
+      .then((response) => {
+        const authStore = useAuthStore()
+        authStore.setAuthenticated(response.data)
+        return true
+      })
+      .catch(() => {
+        redirectToLogin()
+        return false
+      })
       .finally(() => {
         refreshPromise = null
       })
@@ -61,8 +81,6 @@ export function registerInterceptors(client: AxiosInstance) {
         if (refreshed) {
           return client(requestConfig)
         }
-
-        redirectToLogin()
       }
 
       return Promise.reject(error)

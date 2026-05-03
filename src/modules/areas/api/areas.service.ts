@@ -5,6 +5,7 @@ export interface SubArea {
   id: number
   nombre: string
   area_id: number
+  area_nombre?: string
 }
 
 export interface Area {
@@ -18,6 +19,10 @@ export interface AreaPayload {
 }
 
 export type SubAreaPayload = AreaPayload
+
+export interface SubAreasListParams extends ListParams {
+  search?: string
+}
 
 export const areasService = {
   async list(params: ListParams) {
@@ -38,6 +43,10 @@ export const areasService = {
 
   async createSubArea(areaId: number, payload: SubAreaPayload) {
     const { data } = await apiClient.post<SubArea>(`/v1/areas/${areaId}/subareas`, payload)
+    return data
+  },
+  async listSubAreas(params: SubAreasListParams) {
+    const { data } = await apiClient.get<PaginatedResponse<SubArea>>('/v1/areas/subareas', { params })
     return data
   },
   async updateSubArea(areaId: number, subAreaId: number, payload: SubAreaPayload) {

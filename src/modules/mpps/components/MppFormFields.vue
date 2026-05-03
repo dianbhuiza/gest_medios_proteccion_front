@@ -28,5 +28,5 @@ defineProps<{
   errors: Record<string, string | undefined>
 }>()
 
-const tipos = ['overol', 'botas', 'guantes', 'casco', 'otro']
+const tipos = ['overol', 'botas', 'sin_talla']
 </script>

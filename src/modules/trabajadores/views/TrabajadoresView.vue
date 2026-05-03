@@ -34,14 +34,19 @@
     >
       <TrabajadorFormFields
         v-model:nombre="nombre"
-        v-model:area-id="area_id"
+        v-model:sub-area-id="sub_area_id"
+        v-model:sub-area-search="subAreaSearch"
         v-model:cargo-id="cargo_id"
+        v-model:cargo-search="cargoSearch"
         v-model:talla-overol-id="talla_overol_id"
         v-model:talla-botas-id="talla_botas_id"
-        :areas="areasQuery.data.value?.results ?? []"
-        :cargos="cargosQuery.data.value?.results ?? []"
+        :sub-areas="subAreaAutocompleteOptions"
+        :sub-areas-loading="isSubAreaSearchLoading"
+        :cargos="cargoAutocompleteOptions"
+        :cargos-loading="isCargoSearchLoading || createCargoMutation.isPending.value"
         :tallas="tallasQuery.data.value?.results ?? []"
         :errors="errors"
+        @create-cargo="handleCreateCargo"
       />
     </EntityDialog>
 
@@ -56,11 +61,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 
 import { normalizeHttpError } from '@/core/http/error'
+import { cargosService } from '@/modules/cargos/api/cargos.service'
 import {
   type Trabajador,
   type TrabajadorPayload,
@@ -72,7 +79,10 @@ import {
   useUpdateTrabajadorMutation,
 } from '@/modules/trabajadores/mutations/useTrabajadoresMutations'
 import {
-  useAreasOptionsQuery,
+  trabajadoresCatalogKeys,
+  useCargosAutocompleteQuery,
+  useSubAreasAutocompleteQuery,
+  useSubAreasOptionsQuery,
   useCargosOptionsQuery,
   useTallasOptionsQuery,
   useTrabajadoresListQuery,
@@ -91,15 +101,31 @@ const uiStore = useUiStore()
 const page = ref(1)
 const pageSize = ref(20)
 const search = ref('')
+const subAreaSearch = ref('')
+const debouncedSubAreaSearch = ref('')
+const cargoSearch = ref('')
+const debouncedCargoSearch = ref('')
 
 const trabajadoresQuery = useTrabajadoresListQuery(page, pageSize)
-const areasQuery = useAreasOptionsQuery()
+const subAreasQuery = useSubAreasOptionsQuery()
+const subAreasAutocompleteQuery = useSubAreasAutocompleteQuery(debouncedSubAreaSearch)
 const cargosQuery = useCargosOptionsQuery()
+const cargosAutocompleteQuery = useCargosAutocompleteQuery(debouncedCargoSearch)
 const tallasQuery = useTallasOptionsQuery()
 
 const createMutation = useCreateTrabajadorMutation()
 const updateMutation = useUpdateTrabajadorMutation()
 const deleteMutation = useDeleteTrabajadorMutation()
+const queryClient = useQueryClient()
+const createCargoMutation = useMutation({
+  mutationFn: (nombre: string) => cargosService.create({ nombre }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: trabajadoresCatalogKeys.cargos })
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === 'catalogos' && queryKey[1] === 'cargos',
+    })
+  },
+})
 
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
@@ -110,7 +136,7 @@ const { defineField, errors, handleSubmit, resetForm, setValues } = useForm<Trab
   validationSchema: toTypedSchema(trabajadorSchema),
   initialValues: {
     nombre: '',
-    area_id: 0,
+    sub_area_id: 0,
     cargo_id: 0,
     talla_overol_id: 0,
     talla_botas_id: 0,
@@ -118,26 +144,82 @@ const { defineField, errors, handleSubmit, resetForm, setValues } = useForm<Trab
 })
 
 const [nombre] = defineField('nombre')
-const [area_id] = defineField('area_id')
+const [sub_area_id] = defineField('sub_area_id')
 const [cargo_id] = defineField('cargo_id')
 const [talla_overol_id] = defineField('talla_overol_id')
 const [talla_botas_id] = defineField('talla_botas_id')
 
 const columns: EntityTableColumn[] = [
   { key: 'nombre', title: 'Nombre' },
-  { key: 'area', title: 'Área' },
+  { key: 'sub_area', title: 'Sub área' },
   { key: 'cargo', title: 'Cargo' },
   { key: 'talla_overol', title: 'Talla overol' },
   { key: 'talla_botas', title: 'Talla botas' },
 ]
 
-const areaMap = computed(() => new Map((areasQuery.data.value?.results ?? []).map((x) => [x.id, x.nombre])))
+const subAreaMap = computed(() => new Map((subAreasQuery.data.value?.results ?? []).map((x) => [x.id, x.nombre])))
 const cargoMap = computed(() => new Map((cargosQuery.data.value?.results ?? []).map((x) => [x.id, x.nombre])))
 const tallaMap = computed(() => new Map((tallasQuery.data.value?.results ?? []).map((x) => [x.id, x.valor])))
+const selectedSubArea = computed(() => {
+  const selectedId = sub_area_id.value
+  if (!selectedId) return undefined
+
+  return (
+    subAreasAutocompleteQuery.data.value?.results.find((item) => item.id === selectedId)
+    ?? subAreasQuery.data.value?.results.find((item) => item.id === selectedId)
+  )
+})
+const subAreaAutocompleteOptions = computed(() => {
+  const optionsMap = new Map<number, { id: number; nombre: string; area_id: number; area_nombre?: string }>()
+
+  for (const item of subAreasAutocompleteQuery.data.value?.results ?? []) {
+    optionsMap.set(item.id, item)
+  }
+
+  if (selectedSubArea.value) {
+    optionsMap.set(selectedSubArea.value.id, selectedSubArea.value)
+  }
+
+  return Array.from(optionsMap.values())
+})
+const selectedCargo = computed(() => {
+  const selectedId = cargo_id.value
+  if (!selectedId) return undefined
+
+  return (
+    cargosAutocompleteQuery.data.value?.results.find((item) => item.id === selectedId)
+    ?? cargosQuery.data.value?.results.find((item) => item.id === selectedId)
+  )
+})
+const cargoAutocompleteOptions = computed(() => {
+  const optionsMap = new Map<number, { id: number; nombre?: string; valor?: string; tipo?: string }>()
+
+  for (const item of cargosAutocompleteQuery.data.value?.results ?? []) {
+    optionsMap.set(item.id, item)
+  }
+
+  if (selectedCargo.value) {
+    optionsMap.set(selectedCargo.value.id, selectedCargo.value)
+  }
+
+  return Array.from(optionsMap.values())
+})
 
 const queryError = computed(() => {
   if (!trabajadoresQuery.error.value) return undefined
   return normalizeHttpError(trabajadoresQuery.error.value).message
+})
+const isSubAreaSearchLoading = computed(() => {
+  const trimmedSearch = subAreaSearch.value.trim()
+  if (!trimmedSearch) return false
+
+  return debouncedSubAreaSearch.value !== trimmedSearch || subAreasAutocompleteQuery.isFetching.value
+})
+const isCargoSearchLoading = computed(() => {
+  const trimmedSearch = cargoSearch.value.trim()
+  if (!trimmedSearch) return false
+
+  return debouncedCargoSearch.value !== trimmedSearch || cargosAutocompleteQuery.isFetching.value
 })
 
 const tableItems = computed(() => {
@@ -147,7 +229,7 @@ const tableItems = computed(() => {
   const mapped = items.map((item) => ({
     id: item.id,
     nombre: item.nombre,
-    area: areaMap.value.get(item.area_id) ?? `#${item.area_id}`,
+    sub_area: subAreaMap.value.get(item.sub_area_id) ?? `#${item.sub_area_id}`,
     cargo: cargoMap.value.get(item.cargo_id) ?? `#${item.cargo_id}`,
     talla_overol: tallaMap.value.get(item.talla_overol_id) ?? `#${item.talla_overol_id}`,
     talla_botas: tallaMap.value.get(item.talla_botas_id) ?? `#${item.talla_botas_id}`,
@@ -166,19 +248,58 @@ function onPageSizeChange(value: number) {
   page.value = 1
 }
 
+let subAreaSearchDebounceTimer: ReturnType<typeof setTimeout> | undefined
+watch(subAreaSearch, (value) => {
+  if (subAreaSearchDebounceTimer) {
+    clearTimeout(subAreaSearchDebounceTimer)
+  }
+
+  subAreaSearchDebounceTimer = setTimeout(() => {
+    debouncedSubAreaSearch.value = value.trim()
+  }, 1300)
+})
+
+let cargoSearchDebounceTimer: ReturnType<typeof setTimeout> | undefined
+watch(cargoSearch, (value) => {
+  if (cargoSearchDebounceTimer) {
+    clearTimeout(cargoSearchDebounceTimer)
+  }
+
+  cargoSearchDebounceTimer = setTimeout(() => {
+    debouncedCargoSearch.value = value.trim()
+  }, 1300)
+})
+
+onBeforeUnmount(() => {
+  if (subAreaSearchDebounceTimer) {
+    clearTimeout(subAreaSearchDebounceTimer)
+  }
+  if (cargoSearchDebounceTimer) {
+    clearTimeout(cargoSearchDebounceTimer)
+  }
+})
+
 function openCreate() {
   editingItem.value = null
+  subAreaSearch.value = ''
+  debouncedSubAreaSearch.value = ''
+  cargoSearch.value = ''
+  debouncedCargoSearch.value = ''
   resetForm({
-    values: { nombre: '', area_id: 0, cargo_id: 0, talla_overol_id: 0, talla_botas_id: 0 },
+    values: { nombre: '', sub_area_id: 0, cargo_id: 0, talla_overol_id: 0, talla_botas_id: 0 },
   })
   dialogOpen.value = true
 }
 
 function openEdit(item: Trabajador) {
   editingItem.value = item
+  subAreaSearch.value = ''
+  debouncedSubAreaSearch.value = ''
+  cargoSearch.value = ''
+  debouncedCargoSearch.value = ''
   setValues({
     nombre: item.nombre,
-    area_id: item.area_id,
+    sub_area_id: item.sub_area_id,
     cargo_id: item.cargo_id,
     talla_overol_id: item.talla_overol_id,
     talla_botas_id: item.talla_botas_id,
@@ -189,6 +310,18 @@ function openEdit(item: Trabajador) {
 function openDelete(item: Trabajador) {
   selectedToDelete.value = item
   deleteDialogOpen.value = true
+}
+
+async function handleCreateCargo(nombre: string) {
+  try {
+    const createdCargo = await createCargoMutation.mutateAsync(nombre)
+    cargo_id.value = createdCargo.id
+    cargoSearch.value = createdCargo.nombre
+    debouncedCargoSearch.value = ''
+    uiStore.mostrarMensaje('Cargo creado correctamente')
+  } catch (error) {
+    uiStore.mostrarMensaje(normalizeHttpError(error).message, 'error')
+  }
 }
 
 const onSave = handleSubmit(async (values) => {

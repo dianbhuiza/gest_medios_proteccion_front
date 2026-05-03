@@ -50,11 +50,11 @@
     >
       <AsignacionMppFormFields
         v-model:trabajador-id="trabajador_id"
-        v-model:fecha="fecha"
-        v-model:items-json="items_json"
+        v-model:items="items"
         :trabajadores="trabajadoresQuery.data.value?.results ?? []"
-        :hint="hint"
-        :errors="errors"
+        :mpps="mppsQuery.data.value?.results ?? []"
+        :tallas="tallasQuery.data.value?.results ?? []"
+        :errors="flatErrors"
       />
     </EntityDialog>
 
@@ -87,6 +87,8 @@ import {
 import {
   useAsignacionesMppListQuery,
   useTrabajadoresCatalogQuery,
+  useMppsCatalogQuery,
+  useTallasCatalogQuery,
 } from '@/modules/asignaciones-mpp/queries/useAsignacionesMppQueries'
 import {
   asignacionMppSchema,
@@ -97,7 +99,6 @@ import EntityDialog from '@/shared/components/EntityDialog.vue'
 import EntityTable, { type EntityTableColumn } from '@/shared/components/EntityTable.vue'
 import { useUiStore } from '@/stores/ui'
 
-const hint = 'Ejemplo: [{"mpp_id": 1, "talla_id": 2}]'
 const uiStore = useUiStore()
 
 const page = ref(1)
@@ -106,6 +107,8 @@ const search = ref('')
 
 const query = useAsignacionesMppListQuery(page, pageSize)
 const trabajadoresQuery = useTrabajadoresCatalogQuery()
+const mppsQuery = useMppsCatalogQuery()
+const tallasQuery = useTallasCatalogQuery()
 
 const createMutation = useCreateAsignacionMppMutation()
 const updateMutation = useUpdateAsignacionMppMutation()
@@ -120,14 +123,20 @@ const { defineField, errors, handleSubmit, resetForm, setValues } = useForm<Asig
   validationSchema: toTypedSchema(asignacionMppSchema),
   initialValues: {
     trabajador_id: 0,
-    fecha: '',
-    items_json: '[{"mpp_id": 1, "talla_id": 1}]',
+    items: [{ mpp_id: 0, talla_id: null, requiere_talla: false }],
   },
 })
 
 const [trabajador_id] = defineField('trabajador_id')
-const [fecha] = defineField('fecha')
-const [items_json] = defineField('items_json')
+const [items] = defineField('items')
+
+const flatErrors = computed(() => {
+  const result: Record<string, string | undefined> = {}
+  for (const [key, value] of Object.entries(errors)) {
+    result[key] = value
+  }
+  return result
+})
 
 const columns: EntityTableColumn[] = [
   { key: 'id', title: 'ID' },
@@ -176,8 +185,7 @@ function openCreate() {
   resetForm({
     values: {
       trabajador_id: 0,
-      fecha: '',
-      items_json: '[{"mpp_id": 1, "talla_id": 1}]',
+      items: [{ mpp_id: 0, talla_id: null, requiere_talla: false }],
     },
   })
   dialogOpen.value = true
@@ -185,10 +193,17 @@ function openCreate() {
 
 function openEdit(item: AsignacionMpp) {
   editingItem.value = item
+  const mppsList = mppsQuery.data.value?.results ?? []
   setValues({
     trabajador_id: item.trabajador_id,
-    fecha: item.fecha,
-    items_json: JSON.stringify(item.items.map((entry) => ({ mpp_id: entry.mpp_id, talla_id: entry.talla_id }))),
+    items: item.items.map((entry) => {
+      const mpp = mppsList.find((m) => m.id === entry.mpp_id)
+      return {
+        mpp_id: entry.mpp_id,
+        talla_id: entry.talla_id ?? null,
+        requiere_talla: mpp?.tipo_talla !== 'sin_talla',
+      }
+    }),
   })
   dialogOpen.value = true
 }
@@ -200,10 +215,15 @@ function openDelete(item: AsignacionMpp) {
 
 const onSave = handleSubmit(async (values) => {
   try {
+    const fechaActual = new Date().toISOString().split('T')[0]
+
     const payload: AsignacionMppPayload = {
       trabajador_id: values.trabajador_id,
-      fecha: values.fecha || undefined,
-      items: JSON.parse(values.items_json),
+      fecha: fechaActual,
+      items: values.items.map((item: { mpp_id: number; talla_id: number | null }) => ({
+        mpp_id: item.mpp_id,
+        talla_id: item.talla_id ?? 0,
+      })),
     }
 
     if (editingItem.value) {

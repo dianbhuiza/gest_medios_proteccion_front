@@ -4,6 +4,46 @@ import { authService, type AuthSession, type SignInPayload } from '@/modules/aut
 
 export type AuthStatus = 'unknown' | 'authenticated' | 'anonymous'
 
+const STORAGE_KEY = 'auth_state'
+
+interface PersistedState {
+  status: AuthStatus
+  session: AuthSession | null
+}
+
+function loadPersistedState(): PersistedState {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.status === 'authenticated' && parsed.session) {
+        return parsed
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return { status: 'unknown', session: null }
+}
+
+function savePersistedState(state: PersistedState) {
+  if (state.status === 'authenticated' && state.session) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function clearPersistedState() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 interface AuthState {
   status: AuthStatus
   session: AuthSession | null
@@ -12,10 +52,13 @@ interface AuthState {
 let ensureSessionPromise: Promise<boolean> | null = null
 
 export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => ({
-    status: 'unknown',
-    session: null,
-  }),
+  state: (): AuthState => {
+    const persisted = loadPersistedState()
+    return {
+      status: persisted.status,
+      session: persisted.session,
+    }
+  },
   getters: {
     isAuthenticated: (state) => state.status === 'authenticated',
   },
@@ -23,10 +66,12 @@ export const useAuthStore = defineStore('auth', {
     setAuthenticated(session: AuthSession) {
       this.session = session
       this.status = 'authenticated'
+      savePersistedState({ status: 'authenticated', session })
     },
     setAnonymous() {
       this.session = null
       this.status = 'anonymous'
+      clearPersistedState()
     },
     async signIn(payload: SignInPayload) {
       const session = await authService.signIn(payload)

@@ -2,7 +2,9 @@ import { z } from 'zod'
 
 export const mppSchema = z.object({
   nombre: z.string().trim().min(1, 'El nombre es obligatorio'),
-  tipo_talla: z.string().trim().min(1, 'El tipo de talla es obligatorio'),
+  tipo_talla: z.enum(['overol', 'botas', 'sin_talla'], {
+    errorMap: () => ({ message: 'Tipo de talla inválido' }),
+  }),
 })
 
 export const mppStockActionSchema = z.object({

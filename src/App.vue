@@ -17,13 +17,13 @@
         />
         <div class="brand ml-2 d-flex align-center">
           <svg width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 2L33 10V26L18 34L3 26V10L18 2Z" stroke="#F59E0B" stroke-width="1.5" fill="rgba(245,158,11,0.07)"></path>
-            <path d="M18 8L27 13V22L18 27L9 22V13L18 8Z" stroke="#F59E0B" stroke-width="1" stroke-opacity="0.35" fill="none"></path>
-            <circle cx="18" cy="18" r="3.5" fill="#F59E0B"></circle>
-            <line x1="18" y1="8" x2="18" y2="11.5" stroke="#F59E0B" stroke-width="1.5" stroke-opacity="0.55"></line>
-            <line x1="18" y1="24.5" x2="18" y2="28" stroke="#F59E0B" stroke-width="1.5" stroke-opacity="0.55"></line>
-            <line x1="8.5" y1="12.8" x2="11.5" y2="14.5" stroke="#F59E0B" stroke-width="1.5" stroke-opacity="0.55"></line>
-            <line x1="24.5" y1="21.5" x2="27.5" y2="23.2" stroke="#F59E0B" stroke-width="1.5" stroke-opacity="0.55"></line>
+            <path d="M18 2L33 10V26L18 34L3 26V10L18 2Z" stroke="#2563EB" stroke-width="1.5" fill="rgba(37,99,235,0.07)"></path>
+            <path d="M18 8L27 13V22L18 27L9 22V13L18 8Z" stroke="#2563EB" stroke-width="1" stroke-opacity="0.35" fill="none"></path>
+            <circle cx="18" cy="18" r="3.5" fill="#2563EB"></circle>
+            <line x1="18" y1="8" x2="18" y2="11.5" stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.55"></line>
+            <line x1="18" y1="24.5" x2="18" y2="28" stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.55"></line>
+            <line x1="8.5" y1="12.8" x2="11.5" y2="14.5" stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.55"></line>
+            <line x1="24.5" y1="21.5" x2="27.5" y2="23.2" stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.55"></line>
           </svg>
           <div class="brand-text ml-2">
             <div class="brand-name">REFINERÍA</div>
@@ -156,16 +156,16 @@ function onSnackbarUpdate(value: boolean) {
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: 0.2em;
-  color: #F59E0B;
+  color: #2563EB;
   line-height: 1.1;
 }
 .brand-sub {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.57rem;
   letter-spacing: 0.16em;
-  opacity: 0.4;
+  opacity: 0.45;
   line-height: 1;
-  color: #CBD5E1;
+  color: #64748B;
 }
 .status-dot {
   display: inline-block;
@@ -189,7 +189,7 @@ function onSnackbarUpdate(value: boolean) {
 }
 .drawer-accent-line {
   height: 2px;
-  background: linear-gradient(90deg, #F59E0B 0%, transparent 100%);
+  background: linear-gradient(90deg, #2563EB 0%, transparent 100%);
   margin-bottom: 4px;
 }
 .nav-list { padding-left: 8px; padding-right: 8px; }
@@ -201,11 +201,11 @@ function onSnackbarUpdate(value: boolean) {
   text-transform: uppercase;
 }
 .nav-item :deep(.v-list-item__prepend .v-icon) { opacity: 0.55; font-size: 18px; }
-.nav-item--active :deep(.v-list-item__prepend .v-icon) { opacity: 1; color: #F59E0B !important; }
-.nav-item--active { background: rgba(245, 158, 11, 0.1) !important; }
-.nav-item--active :deep(.v-list-item-title) { color: #F59E0B; }
-.nav-group--active :deep(.v-list-item-title) { color: #F59E0B; opacity: 1; }
-.nav-group--active :deep(.v-list-item__prepend .v-icon) { opacity: 1; color: #F59E0B !important; }
+.nav-item--active :deep(.v-list-item__prepend .v-icon) { opacity: 1; color: #2563EB !important; }
+.nav-item--active { background: rgba(37, 99, 235, 0.1) !important; }
+.nav-item--active :deep(.v-list-item-title) { color: #2563EB; }
+.nav-group--active :deep(.v-list-item-title) { color: #2563EB; opacity: 1; }
+.nav-group--active :deep(.v-list-item__prepend .v-icon) { opacity: 1; color: #2563EB !important; }
 .nav-item--child { padding-left: 12px !important; }
 .nav-item--child :deep(.v-list-item__prepend) { margin-inline-start: 8px !important; }
 .nav-section-label {
@@ -215,7 +215,7 @@ function onSnackbarUpdate(value: boolean) {
   color: #64748B;
   text-transform: uppercase;
 }
-.drawer-footer { border-top: 1px solid rgba(30, 45, 64, 1); }
+.drawer-footer { border-top: 1px solid #E2E8F0; }
 .drawer-footer-text {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.65rem;
